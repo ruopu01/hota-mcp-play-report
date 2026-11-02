@@ -219,3 +219,33 @@ data/                        journal-game1.jsonl · journal-game2.jsonl
 - 仅为个人实验记录，与 `timoncool/hota-mcp` 作者无关；hota-mcp 自身的许可证见其仓库。
 - 游戏素材（截图）版权归 Ubisoft / HotA 团队，仅作技术说明用途。
 - 未修改游戏任何文件；`tools/` 里的脚本只通过 MCP 接口操作游戏。
+
+## 九、归档约定
+
+**这个仓库是「所有跟英雄无敌 3 相关的学习记录」的唯一去处**，不再另开仓库。以后每学到一条、每踩到一个坑、每打完一局，都往这里加，然后上传。
+
+往哪写：
+
+| 内容 | 位置 | 规则 |
+| --- | --- | --- |
+| 可复现的技术问题 | `problems/NN-简短标题.md` | 从 `07` 往后编号；四段式（现象 / 复现 / 原因判断 / 绕法）；同时在 `problems/README.md` 的索引表补一行 |
+| 对局记录（战报 / 日记） | `diary/第N局-MM-阶段.md` | 一局拆 2–4 篇（开局、事故、收工）；逐日写清"看到什么 → 怎么想 → 做了什么 → 花了多少"，配 `screenshots/` 的图 |
+| 游戏机制 / 数值 | 就近写进对应对局日记的"机制小抄"，或 `problems/06-协议与确认.md` | 附 `hota_reference` / tooltip 的原文，不凭记忆 |
+| 新工具脚本 | `tools/` | 零依赖（只用标准库），顶部写一句用法 |
+
+素材按固定流程走：
+
+1. 每个回合结束前跑 `tools/endday.py`：截 `screenshots/dayNN-W-M.png`，并往 `data/turnlog-index.md` 追加一行（日期 / 英雄 / 位置 / 移动力 / 金币）。
+2. 一局结束时，把 `%LOCALAPPDATA%\HotaMcp` 下的 `sessions\*\journal.jsonl` 与 `usage\*.jsonl` 复制成 `data/journal-gameN.jsonl` / `data/usage-gameN.jsonl`。
+3. 截图统一量化到 256 色再入库（避免仓库膨胀）。
+
+上传：
+
+```powershell
+cd D:\Heroes3\hota-mcp-report
+python .publish\publish.py . ruopu01/hota-mcp-play-report "说明这一版改了什么"
+```
+
+`.publish/` 已被 `.gitignore` 忽略，只在本机存在（内含读 Windows 凭据的发布脚本，不分发）。
+
+已知限制：本机 token 的 scope 不含 `delete_repo`，所以脚本只能更新内容、不能删仓库；废弃仓库要手动去 Settings → Danger Zone 删。
