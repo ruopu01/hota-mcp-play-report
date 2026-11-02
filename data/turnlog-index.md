@@ -1,0 +1,10 @@
+- day 1/1/1 hero=Adelaide pos=[9, 21, 0] mp=0/1560 gold=23260 shot=day01-1-1.png
+- day 2/1/1 hero=Adelaide pos=[9, 21, 0] mp=0/1560 gold=24260 shot=day02-1-1.png
+- day 3/1/1 hero=Adelaide pos=[2, 17, 0] mp=196/1560 gold=25260 shot=day03-1-1.png
+- day 4/1/1 hero=Adelaide pos=[10, 16, 0] mp=0/1560 gold=26260 shot=day04-1-1.png
+- day 5/1/1 hero=Adelaide pos=[14, 13, 0] mp=109/1560 gold=29560 shot=day05-1-1.png
+- day 6/1/1 hero=Adelaide pos=[9, 18, 0] mp=0/1560 gold=28560 shot=day06-1-1.png
+- day 7/1/1 hero=Rion pos=[8, 12, 0] mp=629/1560 gold=24590 shot=day07-1-1.png
+- day 7/1/1 hero=Adelaide pos=[12, 6, 0] mp=0/1560 gold=24590 shot=day07-1-1.png
+- day 1/2/1 hero=None pos=None mp=None/None gold=19390 shot=day01-2-1.png
+- day 2/2/1 hero=Adelaide pos=[8, 3, 1] mp=385/1560 gold=13650 shot=day02-2-1.png

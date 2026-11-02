@@ -1,30 +1,51 @@
-# 脚本说明
+# tools/ — 我用过的客户端与自动化脚本
 
-这些脚本都是"通过 MCP 接口操作游戏"的客户端，不读写游戏内存，也不修改游戏文件。
+全部是 **纯 Python 3（无第三方依赖）**，只做一件事：把 MCP 的 HTTP 接口包成命令行。
+它们不读游戏内存、不 hook 进程 —— 只跟 `127.0.0.1:18773/mcp` 说话。
+
+## 客户端
 
 | 文件 | 作用 |
 | --- | --- |
-| `mcp.py` | 零依赖 MCP 客户端：读 `%LOCALAPPDATA%\HotaMcp\connection.token`，走 Streamable HTTP + SSE，暴露 `call(name, args)` 与 `schemas()` |
-| `autoplay.py` | 当晚的挂机循环：settle 对话框 → 挑最近的可拾取目标 → `move_to` → `turn:end`，含全部 workaround（Esc/Enter 合成键盘、revision 重试、visited 去重） |
-| `play2.py` | 手动单步工具：`state` / `near` / `act <action>` / `move <x> <y>` / `go <x> <y>` / `endturn` / `click <key>` / `plan <file>` / `tool <name> <json>` |
-| `capture.py` | 调 `debug_capture` 拉一张游戏 framebuffer PNG 并打印落盘路径 |
-| `msgloop.py` | 循环点掉 message 屏（开局信、宝箱、事件通知），遇到金币选项优先选金币 |
+| `mcp.py` | 最小 MCP 客户端。`connect()` 拿 session，`call(session, name, args)` 调工具，`text_of(res)` 取文本。支持 `Authorization: Bearer <connection.token>` 与 SSE 解析 |
+| `play2.py` | 日常操作壳：`state` / `near` / `act <action>` / `move <x> <y>` / `go <x> <y>` / `endturn` / `click <key>` / `plan <file>` / `tool <name> <json>` |
+| `mvt.py` | 直接按坐标走：`python mvt.py 12 8` → `move_to_tile` |
+| `endday.py` | 收工例行：`observe` 确认在冒险屏 → `debug_capture` 存 PNG 到 `turnlog/dayNN-W-M.png` → 往 `turnlog/index.md` 追加一行 |
+| `msgloop.py` | 对话框清理机：循环点 `iokay.def`，遇 `resour82.def` 先点金币选项，直到离开 `message` 屏 |
+| `capture.py` | 调 `debug_capture`，打印落盘路径 |
+| `actions.py` / `texts.py` / `eli.py` | 只打印动作表 / 只打印非空文本 / 打印元素的像素矩形（`inspect_element`） |
 
-## 用法
+## 输入模拟（绕 bug 用）
+
+| 文件 | 作用 |
+| --- | --- |
+| `clickat.py` | 按元素 key 做**像素点击**：`EnumWindows` 找标题含 "Horn of the Abyss" 的窗口，`GetClientRect` 得到 1180×664，按比例缩放后 `PostMessage 0x200 → 0x201 → 0x202` |
+| `clickxy.py` | 直接给 (x, y) 点击，同上消息序列 |
+| `sendkey.py` / `escape.py` | 发单个按键：`0x0100` keydown / `0x0101` keyup，`lParam = scan<<16\|1`（+ `0xC0000000`）。`escape.py` 固定发 Esc，用来关掉任何卡住的屏 |
+
+> **为什么需要这些**：见 [`../problems/02-兵格与交接.md`](../problems/02-兵格与交接.md)
+> 与 [`../problems/03-对话框与按钮.md`](../problems/03-对话框与按钮.md)。
+> 语义动作点不到的地方，只能退回"真的按一下键"。
+
+## 自动化
+
+| 文件 | 作用 |
+| --- | --- |
+| `autoplay.py` | 第一局的挂机脚本：找最近可拾取目标 → `move_to` → 捡 → 没移动力就结束回合。含全部 workaround（stale revision 重试、`used`/`bad` 黑名单、对话框 settle、Esc 兜底） |
+
+## 典型用法
 
 ```powershell
-$env:PYTHONIOENCODING = 'utf-8'   # 必须：界面文本是俄语，默认 GBK 会乱码
-& 'C:\Program Files\Python314\python.exe' .\autoplay.py
+$env:PYTHONIOENCODING='utf-8'      # 必须，否则俄语文本在 GBK 控制台上炸
+python play2.py state               # 看一眼当前屏
+python play2.py go 12 8             # 走到 (12,8)
+python play2.py act turn:end        # 结束回合（自带 message:confirm）
+python endday.py                    # 收工：截图 + 记账
 ```
 
-前置条件：
+## 客户端坐标缩放
 
-1. `HotaMcp.exe` 服务在跑（`127.0.0.1:18773`）；
-2. 游戏已启动并 `game_status` 返回 `attached`；
-3. 游戏窗口标题含 "Horn of the Abyss"（脚本用 `EnumWindows` 找窗口发键盘消息）。
-
-## 已知限制
-
-- `autoplay.py` 只会"捡资源 + 结束回合"——因为驻军兵种交接在本 build 不可用（见 `docs/bugs.md` #3），它无法壮大军队，也就赢不了。
-- 建造/招募的确认框必须用真实键盘 Enter 触发（见 `docs/bugs.md` #2）。
-- 随机地图会在开局后让所有读工具崩掉（见 `docs/bugs.md` #1），脚本对此没有恢复手段。
+`debug_capture` 给的是 1180×664 的 framebuffer；`clickat.py` 用 `GetClientRect`
+拿窗口客户区（本机也是 1180×664，缩放比 1.0），再 `PostMessage`。
+如果换分辨率，先把 `scale = min(client_w/width, client_h/height)` 算出来再乘 ——
+这跟 hota-mcp 内部 `ToWindow` 的 letterbox 算法一致。
