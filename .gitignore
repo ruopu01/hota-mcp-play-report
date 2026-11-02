@@ -1,0 +1,10 @@
+﻿# 日志只保留样本，完整日志体积大且含路径信息
+logs/full/
+*.log
+
+# Python
+__pycache__/
+*.pyc
+
+# 本地临时
+*.tmp
